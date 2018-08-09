@@ -1,3 +1,6 @@
+[![GoDoc](https://godoc.org/github.com/tjamet/goraw?status.svg)](https://godoc.org/github.com/tjamet/goraw)
+[![Build Status](https://travis-ci.org/tjamet/goraw.svg?branch=master)](https://travis-ci.org/tjamet/goraw)
+
 # goraw
 A go library to read raw files
 

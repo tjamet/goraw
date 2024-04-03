@@ -12,8 +12,7 @@ import (
 const testDir = "tests/raw"
 
 func DownloadRAW(link string) string {
-	os.Getenv("GOPATH")
-	destFile := os.Getenv("GOPATH") + "/src/github.com/tjamet/goraw/" + testDir + strings.TrimPrefix(link, "http://www.rawsamples.ch/raws")
+	destFile := testDir + strings.TrimPrefix(link, "http://www.rawsamples.ch/raws")
 	destFolder := filepath.Dir(destFile)
 	os.MkdirAll(destFolder, 0777)
 	_, err := os.Stat(destFile)

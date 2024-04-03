@@ -5,7 +5,7 @@ import (
 
 	"github.com/tjamet/goraw"
 	_ "github.com/tjamet/goraw/fuji"
-	"github.com/tjamet/goraw/test-tools"
+	tools "github.com/tjamet/goraw/test-tools"
 )
 
 func ExampleOpen() {

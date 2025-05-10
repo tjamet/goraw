@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tjamet/goraw/fuji"
-	"github.com/tjamet/goraw/test-tools"
+	tools "github.com/tjamet/goraw/test-tools"
 )
 
 func TestNonFujiFileReportsError(t *testing.T) {
@@ -29,4 +29,27 @@ func TestFujiFileCanGetExif(t *testing.T) {
 	assert.NoError(t, err)
 	// fujifilm is big endian
 	assert.Equal(t, []byte("II"), header)
+}
+
+func TestFujiClose(t *testing.T) {
+	testFile := tools.DownloadRAW("http://www.rawsamples.ch/raws/fuji/RAW_FUJI_FINEPIX_X100.RAF")
+	r, err := fuji.Open(testFile)
+	assert.NoError(t, err)
+
+	// Test normal close
+	err = r.Close()
+	assert.NoError(t, err)
+
+	// Test double close (should not error)
+	err = r.Close()
+	assert.NoError(t, err)
+
+	// Test use after close (should error)
+	_, err = r.ExifReaderAt()
+	assert.Error(t, err)
+
+	// Test nil receiver close (should not error)
+	var nilRaw *fuji.Raw
+	err = nilRaw.Close()
+	assert.NoError(t, err)
 }

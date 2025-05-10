@@ -53,3 +53,12 @@ func TestFujiClose(t *testing.T) {
 	err = nilRaw.Close()
 	assert.NoError(t, err)
 }
+
+func TestFujiExifOffset(t *testing.T) {
+	testFile := tools.DownloadRAW("http://www.rawsamples.ch/raws/fuji/RAW_FUJI_FINEPIX_X100.RAF")
+	r, err := fuji.Open(testFile)
+	assert.NoError(t, err)
+	offset, err := r.ExifOffset()
+	assert.NoError(t, err)
+	assert.Equal(t, int64(160), offset)
+}

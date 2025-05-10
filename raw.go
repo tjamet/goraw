@@ -10,6 +10,7 @@ import (
 // Decoder defines the interface to implement a new raw decoder
 type Decoder interface {
 	ExifReaderAt() (io.ReaderAt, error)
+	ExifOffset() (int64, error)
 	Close() error
 }
 

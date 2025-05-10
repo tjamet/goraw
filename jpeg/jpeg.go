@@ -14,7 +14,8 @@ const jpegAPP1 = 0xE1
 
 // JPEG holds the context to handle JPEG within a RAW
 type JPEG struct {
-	readerAt io.ReaderAt
+	readerAt   io.ReaderAt
+	exifOffset int64
 }
 
 // New instanciates a handler for JPEG within a RAW
@@ -32,11 +33,28 @@ func (r *JPEG) ExifReaderAt() (io.ReaderAt, error) {
 	if r.readerAt == nil {
 		return nil, os.ErrClosed
 	}
-	offset, err := findJPEGExifOffset(jpegAPP1, r.readerAt)
-	if err != nil {
-		return nil, fmt.Errorf("could not find Exif data: %s", err.Error())
+	if r.exifOffset == 0 {
+		offset, err := findJPEGExifOffset(jpegAPP1, r.readerAt)
+		if err != nil {
+			return nil, fmt.Errorf("could not find Exif data: %s", err.Error())
+		}
+		r.exifOffset = int64(offset)
 	}
-	return gorawio.NewReaderAt(r.readerAt, int64(offset)), nil
+	return gorawio.NewReaderAt(r.readerAt, r.exifOffset), nil
+}
+
+func (r *JPEG) ExifOffset() (int64, error) {
+	if r == nil {
+		return 0, fmt.Errorf("raw is nil")
+	}
+	if r.exifOffset == 0 {
+		offset, err := findJPEGExifOffset(jpegAPP1, r.readerAt)
+		if err != nil {
+			return 0, fmt.Errorf("could not find Exif data: %s", err.Error())
+		}
+		r.exifOffset = int64(offset)
+	}
+	return r.exifOffset, nil
 }
 
 // findJPEGExifOffset finds marker in r and returns the offset of the Exif data

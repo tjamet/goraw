@@ -12,6 +12,17 @@ import (
 	"github.com/tjamet/goraw/jpeg"
 )
 
+const (
+	uint32Length     = 4
+	headerLength     = 108
+	jpegStartOffset  = 84
+	jpegLengthOffset = 88
+	versionOffset    = 16
+	versionLength    = 4
+	cameraOffset     = 24
+	cameraLength     = 32
+)
+
 var magic = []byte("FUJIFILMCCD-RAW")
 
 // Raw holds the context to decode a fujifilm raw file
@@ -22,6 +33,7 @@ type Raw struct {
 	camera     string
 	jpegStart  uint32
 	jpegLength uint32
+	jpegReader *jpeg.JPEG
 }
 
 // Open instanciates a fujifilm raw handler from a file
@@ -45,7 +57,7 @@ func Close(r *Raw) error {
 // New instanciates a fujifilm raw handler from ReaderAt
 func New(r io.ReaderAt) (*Raw, error) {
 	// https://libopenraw.freedesktop.org/wiki/Fuji_RAF/
-	header := make([]byte, 108)
+	header := make([]byte, headerLength)
 	_, err := r.ReadAt(header, 0)
 	if err != nil {
 		return nil, err
@@ -55,10 +67,10 @@ func New(r io.ReaderAt) (*Raw, error) {
 	}
 	return &Raw{
 		readerAt:   r,
-		version:    string(header[16:20]),
-		camera:     string(header[24 : 24+bytes.Index(header[24:24+32], []byte{'\x00'})]),
-		jpegStart:  binary.BigEndian.Uint32(header[84:88]),
-		jpegLength: binary.BigEndian.Uint32(header[88:92]),
+		version:    string(header[versionOffset : versionOffset+versionLength]),
+		camera:     string(header[cameraOffset : cameraOffset+cameraLength]),
+		jpegStart:  binary.BigEndian.Uint32(header[jpegStartOffset : jpegStartOffset+uint32Length]),
+		jpegLength: binary.BigEndian.Uint32(header[jpegLengthOffset : jpegLengthOffset+uint32Length]),
 	}, nil
 }
 
@@ -70,11 +82,32 @@ func (r *Raw) ExifReaderAt() (io.ReaderAt, error) {
 	if r.readerAt == nil {
 		return nil, os.ErrClosed
 	}
-	j, err := jpeg.New(gorawio.NewReaderAt(r.readerAt, int64(r.jpegStart)))
-	if err != nil {
-		return nil, err
+	if r.jpegReader == nil {
+		j, err := jpeg.New(gorawio.NewReaderAt(r.readerAt, int64(r.jpegStart)))
+		if err != nil {
+			return nil, err
+		}
+		r.jpegReader = j
 	}
-	return j.ExifReaderAt()
+	return r.jpegReader.ExifReaderAt()
+}
+
+func (r *Raw) ExifOffset() (int64, error) {
+	if r == nil {
+		return 0, fmt.Errorf("raw is nil")
+	}
+	if r.jpegReader == nil {
+		j, err := jpeg.New(gorawio.NewReaderAt(r.readerAt, int64(r.jpegStart)))
+		if err != nil {
+			return 0, err
+		}
+		r.jpegReader = j
+	}
+	jpegExifOffset, err := r.jpegReader.ExifOffset()
+	if err != nil {
+		return 0, err
+	}
+	return jpegExifOffset + int64(r.jpegStart), nil
 }
 
 func (r *Raw) Close() error {

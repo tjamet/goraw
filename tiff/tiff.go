@@ -58,6 +58,13 @@ func (r *Raw) Close() error {
 	return nil
 }
 
+func (r *Raw) ExifOffset() (int64, error) {
+	if r == nil {
+		return 0, fmt.Errorf("raw is nil")
+	}
+	return 0, nil
+}
+
 func init() {
 	goraw.RegisterFormat("tiff", []byte("MM"), func(r io.ReaderAt) (goraw.Decoder, error) { return New(r) })
 	goraw.RegisterFormat("tiff", []byte("II"), func(r io.ReaderAt) (goraw.Decoder, error) { return New(r) })

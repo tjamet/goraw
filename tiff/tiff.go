@@ -1,6 +1,7 @@
 package tiff
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -9,6 +10,7 @@ import (
 
 // Raw holds the context to decode a TIFF based raw file
 type Raw struct {
+	fd       *os.File
 	readerAt io.ReaderAt
 }
 
@@ -18,7 +20,11 @@ func Open(filename string) (*Raw, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Raw{readerAt: fd}, nil
+	return &Raw{readerAt: fd, fd: fd}, nil
+}
+
+func Close(r *Raw) error {
+	return r.Close()
 }
 
 // New instanciates a TIFF based raw handler from ReaderAt
@@ -28,7 +34,28 @@ func New(r io.ReaderAt) (*Raw, error) {
 
 // ExifReaderAt returns a direct reader to the Exif inside the raw
 func (r *Raw) ExifReaderAt() (io.ReaderAt, error) {
+	if r == nil {
+		return nil, fmt.Errorf("raw is nil")
+	}
+	if r.readerAt == nil {
+		return nil, os.ErrClosed
+	}
 	return r.readerAt, nil
+}
+
+func (r *Raw) Close() error {
+	if r == nil {
+		return nil
+	}
+	if r.fd != nil {
+		r.readerAt = nil
+		err := r.fd.Close()
+		if err != nil {
+			return err
+		}
+		r.fd = nil
+	}
+	return nil
 }
 
 func init() {

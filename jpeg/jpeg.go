@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/tjamet/goraw"
-	"github.com/tjamet/goraw/io"
+	gorawio "github.com/tjamet/goraw/io"
 )
 
 const jpegAPP1 = 0xE1
@@ -25,6 +26,12 @@ func New(r io.ReaderAt) (*JPEG, error) {
 
 // ExifReaderAt returns a direct reader to the Exif inside the raw
 func (r *JPEG) ExifReaderAt() (io.ReaderAt, error) {
+	if r == nil {
+		return nil, fmt.Errorf("jpeg is nil")
+	}
+	if r.readerAt == nil {
+		return nil, os.ErrClosed
+	}
 	offset, err := findJPEGExifOffset(jpegAPP1, r.readerAt)
 	if err != nil {
 		return nil, fmt.Errorf("could not find Exif data: %s", err.Error())
@@ -71,6 +78,14 @@ func findJPEGExifOffset(marker byte, r io.ReaderAt) (uint32, error) {
 		return 0, fmt.Errorf("Unable to find the JPEG Exif marker")
 	}
 	return uint32(markerIndex + 6), nil
+}
+
+func (r *JPEG) Close() error {
+	if r == nil {
+		return nil
+	}
+	r.readerAt = nil
+	return nil
 }
 
 func init() {

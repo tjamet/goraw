@@ -10,6 +10,7 @@ import (
 // Decoder defines the interface to implement a new raw decoder
 type Decoder interface {
 	ExifReaderAt() (io.ReaderAt, error)
+	Close() error
 }
 
 type format struct {
@@ -28,6 +29,13 @@ func Open(filename string) (Decoder, error) {
 		return nil, err
 	}
 	return New(fd)
+}
+
+func Close(r Decoder) error {
+	if r == nil {
+		return fmt.Errorf("decoder is nil")
+	}
+	return r.Close()
 }
 
 // New instanciates a decoder from a ReaderAt by detecting its format

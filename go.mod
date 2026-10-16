@@ -2,7 +2,7 @@ module github.com/tjamet/goraw
 
 go 1.27
 
-require github.com/stretchr/testify v1.4.0
+require github.com/stretchr/testify v1.5.1
 
 require (
 	github.com/davecgh/go-spew v1.1.0 // indirect
